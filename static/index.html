@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Follow: learn from any tutorial with a teacher who watches you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f3ee; --panel:#ffffff; --ink:#1d1b18; --muted:#6f6a62; --line:#e6e0d6;
+    --accent:#d9480f; --accent-soft:#ffe8dc; --ok:#2b8a3e; --ok-soft:#e3f6e7;
+    --warn:#c92a2a; --warn-soft:#ffe3e3; --info:#1c7ed6; --info-soft:#e0efff;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141311; --panel:#1e1c19; --ink:#f1ede6; --muted:#a39d93; --line:#2f2c27;
+      --accent-soft:#3a2216; --ok-soft:#173222; --warn-soft:#3a1a1a; --info-soft:#15283d; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+  header{display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid var(--line)}
+  .brand{font-family:Fraunces,serif;font-weight:600;color:var(--ink);letter-spacing:-.3px;white-space:nowrap}
+  .brand b{color:var(--accent);font-weight:600}
+  .logo{font-size:26px;cursor:pointer;user-select:none}
+  .tag{color:var(--muted);font-size:14px}
+  header .right{margin-left:auto}
+  #homeBtn{display:none}
+  main{max-width:1280px;margin:0 auto;padding:20px 24px 40px}
+  button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--ink);color:var(--bg)}
+  button.accent{background:var(--accent);color:#fff}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  button.small{padding:6px 10px;font-size:13px}
+  button:disabled{opacity:.5;cursor:default}
+  button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+  .ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ic.solid{fill:currentColor;stroke:none}
+  #pauseBtn{flex:0 0 46px;padding-left:0;padding-right:0}
+  #pauseBtn .ic{width:18px;height:18px}
+  .steps .n .ic{width:14px;height:14px;stroke-width:3}
+  .steps .mk{display:flex;gap:6px;align-items:flex-start} .steps .mk .ic{width:13px;height:13px;margin-top:2px}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .err{color:var(--warn)}
+
+  /* ---------- landing ---------- */
+  #landing{max-width:720px;margin:9vh auto 0}
+  .hero{text-align:center}
+  .hero h1{font-family:Fraunces,serif;font-size:46px;line-height:1.08;margin:0 0 16px;letter-spacing:-1px}
+  .hero p.lead{color:var(--muted);font-size:17px;max-width:590px;margin:0 auto 30px;text-wrap:balance}
+  .points{list-style:none;padding:0;margin:26px 0 0;display:flex;justify-content:center;flex-wrap:wrap;gap:8px 0;color:var(--muted);font-size:14px}
+  .points li+li::before{content:"";display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin:0 14px;vertical-align:middle}
+  .urlrow{display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;max-width:680px;margin:0 auto}
+  .urlrow input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:16px;padding:10px 12px;outline:none}
+  #prepStatus{margin-top:16px;color:var(--muted);min-height:24px;text-align:center}
+  @media (max-width:700px){ #landing{margin-top:5vh} .hero h1{font-size:36px} .urlrow{flex-direction:column}
+    .points{display:grid;grid-template-columns:1fr 1fr;gap:10px 0} .points li+li::before{display:none} }
+
+  /* ---------- session ---------- */
+  #session{display:none}
+  #kindBanner{display:none;margin-bottom:14px;padding:12px 16px;border-radius:12px;background:var(--info-soft);font-size:14px}
+  .layout{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:start;
+    grid-template-areas:"video cam" "now controls" "steps side"}
+  .a-video{grid-area:video} .a-cam{grid-area:cam} .a-now{grid-area:now}
+  .a-controls{grid-area:controls} .a-steps{grid-area:steps} .a-side{grid-area:side}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .video-wrap{position:relative;aspect-ratio:16/9;background:#000}
+  .video-wrap iframe,#player{position:absolute;inset:0;width:100%;height:100%}
+  .cam-wrap{position:relative;aspect-ratio:16/9;background:#000}
+  #cam{width:100%;height:100%;object-fit:cover;display:block}
+  #cam.mirror{transform:scaleX(-1)}
+  .pill{position:absolute;left:10px;top:10px;padding:5px 11px;border-radius:999px;font-weight:600;font-size:12px;background:rgba(0,0,0,.6);color:#fff}
+  .pill.done{background:var(--ok)} .pill.mistake{background:var(--warn)} .pill.turn{background:var(--accent)} .pill.watch{background:var(--info)} .pill.paused{background:#555}
+  .say{position:absolute;left:10px;right:10px;bottom:10px;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,.68);color:#fff;font-size:14px;display:none}
+  .lat{position:absolute;right:10px;top:12px;font-size:11px;color:#fff;opacity:.6}
+  .camoff{position:absolute;inset:0;display:grid;place-items:center;color:#bbb;font-size:14px;text-align:center;padding:20px}
+  .nowbar{padding:12px 16px}
+  .nowbar .k{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .nowbar .t{font-family:Fraunces,serif;font-size:21px;margin:2px 0 2px}
+  .nowbar .i{color:var(--muted);font-size:14px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;padding:12px}
+  .controls .full{flex:1 1 100%}
+  .controls .ghost{flex:1 1 auto}
+  #micBtn.listening{background:var(--warn);color:#fff;border-color:var(--warn)}
+  #pauseBtn.on{background:var(--ink);color:var(--bg)}
+  .askrow{display:flex;gap:8px;padding:0 12px 12px}
+  .askrow input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:9px 12px;font:inherit}
+  .chat{padding:0 16px 12px;max-height:170px;overflow:auto;font-size:14px}
+  .chat .q{color:var(--muted);margin-top:8px} .chat .a{margin-top:2px}
+  .steps{list-style:none;margin:0;padding:6px}
+  .steps li{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:10px;cursor:pointer}
+  .steps li:hover{background:var(--bg)}
+  .steps li.cur{background:var(--accent-soft)}
+  .steps .n{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;border:1.5px solid var(--line)}
+  .steps li.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+  .steps li.cur .n{border-color:var(--accent);color:var(--accent)}
+  .steps .st{font-weight:600}
+  .steps .sm{font-size:13px;color:var(--muted)}
+  .steps .mk{font-size:12px;color:var(--warn)}
+  .cardhead{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .cardhead h3{margin:0;font-family:Fraunces,serif;font-size:19px;flex:1}
+  .a-side .card + .card{margin-top:16px}
+  #notesBody{padding:6px 18px 14px;font-size:14px}
+  #notesBody h4{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  #notesBody ul{margin:0;padding-left:18px} #notesBody li{margin:3px 0}
+  .ts{display:inline-block;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 6px;margin-right:6px;cursor:pointer}
+  .sec{margin:10px 0} .sec .h{font-weight:600}
+  details.qa{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0}
+  details.qa summary{cursor:pointer;font-weight:600}
+  details.qa .ans{margin-top:6px;color:var(--ink)}
+  .notes-actions{display:none;gap:8px;padding:0 16px 16px}
+  .muted{color:var(--muted)}
+  #reviewCard{display:none}
+  #reviewCard .body{padding:6px 18px 16px}
+  .stats{display:flex;gap:24px;margin:8px 0 10px;color:var(--muted);font-size:13px} .stats b{color:var(--ink);font-size:21px;display:block}
+
+  /* ---------- phone: video, current step and camera all on one screen ---------- */
+  @media (max-width:820px){
+    main{padding:10px 10px 30px}
+    header{padding:10px 12px;gap:10px} .logo{font-size:22px} header .tag{font-size:12px;line-height:1.3;text-wrap:balance}
+    body.in-session header .tag{display:none}
+    .layout{grid-template-columns:1fr;gap:10px;grid-template-areas:"video" "now" "cam" "controls" "steps" "side"}
+    .cam-wrap{aspect-ratio:auto;height:32vh}
+    .nowbar{padding:8px 12px} .nowbar .t{font-size:17px} .nowbar .i{font-size:13px}
+    .controls{padding:8px;gap:6px} .controls button{padding:9px 10px;font-size:14px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand logo" id="logo" title="Home">Fol<b>low</b></div>
+  <div class="tag">Any tutorial. Now with a teacher who watches you.</div>
+  <div class="right"><button class="ghost small" id="homeBtn"><span data-icon="back"></span>New tutorial</button></div>
+</header>
+
+<main>
+  <!-- ================= LANDING ================= -->
+  <section id="landing">
+    <div class="hero">
+      <h1>Paste a tutorial.<br>Prop up your phone.<br>Start making.</h1>
+      <p class="lead"><span class="brand">Fol<b>low</b></span> watches the video, then watches you.
+        It waits while you catch up, points out mistakes, and answers your questions out loud.</p>
+      <div class="urlrow">
+        <input id="url" placeholder="Paste a YouTube link" autocomplete="off">
+        <button class="accent" id="prepBtn">Start</button>
+      </div>
+      <div id="prepStatus"></div>
+      <ul class="points">
+        <li>Waits for you</li><li>Spots mistakes</li><li>Answers out loud</li><li>Notes for lectures</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= SESSION ================= -->
+  <section id="session">
+    <div id="kindBanner"></div>
+    <div class="layout">
+      <div class="card a-video"><div class="video-wrap" id="videoWrap"><div id="player"></div></div></div>
+
+      <div class="card a-cam">
+        <div class="cam-wrap">
+          <video id="cam" autoplay playsinline muted></video>
+          <div class="camoff" id="camOff">Your camera turns on when you start the lesson.</div>
+          <div class="pill" id="pill">Camera off</div>
+          <div class="lat" id="lat"></div>
+          <div class="say" id="say"></div>
+        </div>
+      </div>
+
+      <div class="card a-now">
+        <div class="nowbar">
+          <div class="k" id="nowK">Step 1</div>
+          <div class="t" id="nowT"></div>
+          <div class="i" id="nowI"></div>
+        </div>
+      </div>
+
+      <div class="card a-controls">
+        <div class="controls">
+          <button class="accent full" id="startBtn">Start lesson</button>
+          <button class="ghost" id="pauseBtn" title="Pause" aria-label="Pause"></button>
+          <button class="ghost" id="replayBtn"></button>
+          <button class="ghost" id="doneBtn"><span data-icon="check"></span>Done</button>
+          <button class="ghost" id="flipBtn"><span data-icon="flip"></span>Flip camera</button>
+          <button class="ghost" id="micBtn"><span data-icon="mic"></span>Ask</button>
+          <button class="ghost" id="finishBtn"><span data-icon="flag"></span>Finish</button>
+        </div>
+        <div class="askrow">
+          <input id="askInput" placeholder="Or type a question, like: what can I use instead of butter?">
+          <button class="ghost" id="askBtn">Ask</button>
+        </div>
+        <div class="chat" id="chat"></div>
+      </div>
+
+      <div class="card a-steps"><ul class="steps" id="steps"></ul></div>
+
+      <div class="a-side">
+        <div class="card" id="notesCard">
+          <div class="cardhead"><h3>Notes and quiz</h3><button class="ghost small" id="notesBtn">Make notes</button></div>
+          <div id="notesBody"><p class="muted">Get study notes and simple questions with answers for this video, ready to download.</p></div>
+          <div class="notes-actions" id="notesActions">
+            <button class="ghost small" id="dlMd">Download notes (.md)</button>
+            <button class="ghost small" id="dlPdf">Save as PDF</button>
+          </div>
+        </div>
+        <div class="card" id="reviewCard">
+          <div class="cardhead"><h3>Session review</h3></div>
+          <div class="body"><div class="stats" id="stats"></div><div id="reviewText"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<canvas id="grab" style="display:none"></canvas>
+
+<script>
+const $ = s => document.querySelector(s);
+const ICON_PATHS = {
+  pause: '<rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/>',
+  play:  '<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z"/>',
+  replay:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  flip:  '<path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><circle cx="12" cy="12" r="3"/><path d="m18 22-3-3 3-3"/><path d="m6 2 3 3-3 3"/>',
+  mic:   '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
+  flag:  '<path d="M4 22V4"/><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1"/>',
+  back:  '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+};
+const ico = (name, cls='') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
+document.querySelectorAll('[data-icon]').forEach(el => el.outerHTML = ico(el.dataset.icon));
+window.addEventListener('DOMContentLoaded', () => { setPauseUI(); $('#replayBtn').innerHTML = `${ico('replay')}Replay step 1`; });
+const CHECK_EVERY_MS = 3500;   // camera frame interval
+const MIN_STEP_SEC   = 5;      // ignore "done" in the first seconds of a step
+const CONF           = 0.6;    // confidence needed to act on done / mistake
+
+let tutorial = null, videoId = null, player = null, notes = null;
+let cur = 0, running = false, paused = false, checking = false, waitingForUser = false;
+let stepStartedAt = 0, pausedAt = 0, lastMistake = '', lastSpoken = '', notVisibleSaid = false;
+let sessionLog = [], stream = null, facing = 'environment', sessionId = 0;
+
+// ------------------------------------------------------------- helpers
+async function api(path, body){
+  const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({detail:r.statusText}));
+  if(!r.ok) throw new Error(j.detail || r.statusText);
+  return j;
+}
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const noDash = s => String(s ?? '').replace(/\s*\u2014\s*/g, ', ').replace(/\u2013/g, '-');
+function fmt(t){ t=Math.max(0,Math.round(t)); return `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`; }
+const isEdu = () => tutorial && tutorial.content_kind === 'educational';
+
+// ------------------------------------------------------------- prepare
+$('#prepBtn').onclick = prepareLesson;
+$('#url').addEventListener('keydown', e => { if(e.key==='Enter') prepareLesson(); });
+
+async function prepareLesson(){
+  const url = $('#url').value.trim();
+  if(!url) return;
+  $('#prepBtn').disabled = true;
+  $('#prepStatus').innerHTML = '<span class="spinner"></span>Watching the video and breaking it into steps. This takes 30 to 90 seconds.';
+  try{
+    const j = await api('/api/prepare', {url});
+    tutorial = j.tutorial; videoId = j.video_id; cur = 0; notes = null;
+    sessionLog = tutorial.steps.map(s => ({step:s.title, seconds:0, completed:false, mistakes:[]}));
+    $('#landing').style.display = 'none';
+    $('#session').style.display = 'block';
+    $('#homeBtn').style.display = 'inline-flex'; document.body.classList.add('in-session');
+    $('#prepStatus').textContent = '';
+    setupForKind();
+    renderSteps(); showNow();
+    await createPlayer();
+    if(isEdu()) loadNotes();
+  }catch(e){
+    $('#prepStatus').innerHTML = `<span class="err">${esc(e.message)}</span>`;
+  }finally{ $('#prepBtn').disabled = false; }
+}
+
+function setupForKind(){
+  const b = $('#kindBanner');
+  if(tutorial.content_kind === 'educational'){
+    b.style.display = 'block';
+    b.innerHTML = `<b>This looks like a lesson, not a hands-on tutorial.</b> We're making study notes and a quiz for you below. The video is split into sections you can jump between.`;
+    $('#startBtn').textContent = 'Start follow-along anyway';
+  }else if(tutorial.content_kind === 'mixed'){
+    b.style.display = 'block';
+    b.innerHTML = `<b>This video teaches ideas and has something to do with your hands.</b> Start the lesson to follow along, and tap "Make notes" for study notes and a quiz.`;
+    $('#startBtn').textContent = 'Start lesson';
+  }else{
+    b.style.display = 'none';
+    $('#startBtn').textContent = 'Start lesson';
+  }
+}
+
+// ------------------------------------------------------------- YouTube player
+function loadYT(){
+  return new Promise(res => {
+    if(window.YT && YT.Player) return res();
+    window.onYouTubeIframeAPIReady = res;
+    const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  });
+}
+async function createPlayer(){
+  await loadYT();
+  return new Promise(res => {
+    player = new YT.Player('player', {
+      videoId,
+      playerVars:{rel:0, modestbranding:1, playsinline:1, start:Math.floor(tutorial.steps[0].start_sec)},
+      events:{onReady:()=>res()}
+    });
+  });
+}
+
+// ------------------------------------------------------------- UI
+function renderSteps(){
+  const label = isEdu() ? 'Section' : 'Step';
+  $('#steps').innerHTML = tutorial.steps.map((s,i) => `
+    <li class="${i===cur?'cur':''} ${sessionLog[i].completed?'done':''}" data-i="${i}">
+      <div class="n">${sessionLog[i].completed?ico('check'):i+1}</div>
+      <div>
+        <div class="st">${esc(noDash(s.title))}</div>
+        <div class="sm">${fmt(s.start_sec)} to ${fmt(s.end_sec)} &middot; ${esc(noDash(s.instruction))}</div>
+        ${sessionLog[i].mistakes.map(m=>`<div class="mk">${ico('alert')}<span>${esc(m)}</span></div>`).join('')}
+      </div>
+    </li>`).join('');
+  document.querySelectorAll('#steps li').forEach(li => li.onclick = () => {
+    const i = +li.dataset.i;
+    if(running) goToStep(i);
+    else { cur = i; renderSteps(); showNow(); if(player) { player.seekTo(tutorial.steps[i].start_sec, true); player.playVideo(); } }
+  });
+}
+function showNow(){
+  const s = tutorial.steps[cur];
+  const label = isEdu() ? 'Section' : 'Step';
+  $('#nowK').textContent = `${label} ${cur+1} of ${tutorial.steps.length}`;
+  $('#nowT').textContent = noDash(s.title);
+  $('#nowI').textContent = noDash(s.instruction);
+  $('#replayBtn').innerHTML = `${ico('replay')}Replay ${label.toLowerCase()} ${cur+1}`;
+}
+function setPill(cls, text){ const p=$('#pill'); p.className='pill '+cls; p.textContent=text; }
+function showSay(text){ const el=$('#say'); if(!text){el.style.display='none';return;} el.textContent=text; el.style.display='block'; }
+
+// ------------------------------------------------------------- speech out
+function speak(text){
+  text = noDash(text);
+  if(!text || text===lastSpoken) return;
+  lastSpoken = text; showSay(text);
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.rate = 1.05;
+    if(player && player.setVolume){ player.setVolume(25); u.onend = () => player && player.setVolume && player.setVolume(100); }
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+// ------------------------------------------------------------- camera
+async function startCamera(){
+  stopCamera();
+  const tries = [
+    {video:{facingMode:{exact:facing}, width:{ideal:1280}}, audio:false},
+    {video:{facingMode:facing, width:{ideal:1280}}, audio:false},
+    {video:true, audio:false},
+  ];
+  let lastErr;
+  for(const c of tries){
+    try{ stream = await navigator.mediaDevices.getUserMedia(c); break; }catch(e){ lastErr = e; }
+  }
+  if(!stream) throw lastErr || new Error('No camera');
+  const cam = $('#cam');
+  cam.srcObject = stream;
+  cam.classList.toggle('mirror', facing === 'user');
+  $('#camOff').style.display = 'none';
+}
+function stopCamera(){
+  if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  $('#cam').srcObject = null;
+  $('#camOff').style.display = 'grid';
+}
+$('#flipBtn').onclick = async () => {
+  facing = facing === 'environment' ? 'user' : 'environment';
+  $('#flipBtn').innerHTML = `${ico('flip')}${facing === 'user' ? 'Back camera' : 'Front camera'}`;
+  if(stream || running){
+    try{ await startCamera(); }catch(e){ alert('Could not switch camera on this device.'); }
+  }
+};
+
+// ------------------------------------------------------------- lesson flow
+$('#startBtn').onclick = startLesson;
+async function startLesson(){
+  try{ await startCamera(); }
+  catch(e){ setPill('mistake','Camera blocked'); alert('Follow needs your camera to watch your work. Please allow camera access.'); return; }
+  sessionLog.forEach(s=>{ s.completed=false; s.mistakes=[]; s.seconds=0; });
+  running = true; paused = false; sessionId++;
+  $('#startBtn').textContent = 'Lesson running'; $('#startBtn').disabled = true;
+  $('#reviewCard').style.display = 'none';
+  setPauseUI();
+  goToStep(cur || 0);
+  if(!window._tick) window._tick = setInterval(tick, 400);
+  checkLoop(sessionId);
+}
+
+function goToStep(i){
+  if(i >= tutorial.steps.length) return finish();
+  if(sessionLog[cur] && stepStartedAt && !paused) sessionLog[cur].seconds += Math.round((Date.now()-stepStartedAt)/1000);
+  cur = i; waitingForUser = false; lastMistake = ''; notVisibleSaid = false; fixing = null;
+  if(paused){ paused = false; setPauseUI(); }
+  stepStartedAt = Date.now();
+  renderSteps(); showNow(); showSay('');
+  player.seekTo(tutorial.steps[i].start_sec, true); player.playVideo();
+  setPill('watch', `Watch step ${i+1}`);
+}
+
+function tick(){   // pause the video at the end of the current step's segment
+  if(!running || paused || !player || waitingForUser || !player.getCurrentTime) return;
+  const s = tutorial.steps[cur];
+  if(player.getCurrentTime() >= s.end_sec - 0.25){
+    player.pauseVideo(); waitingForUser = true;
+    setPill('turn', 'Your turn');
+    speak(`Your turn. ${s.instruction}`);
+  }
+}
+
+function grabFrame(){
+  const v = $('#cam'); if(!v.videoWidth || !stream) return null;
+  const c = $('#grab'), w = 768, h = Math.round(v.videoHeight * w / v.videoWidth);
+  c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h);
+  return c.toDataURL('image/jpeg', 0.75);
+}
+
+async function checkLoop(myId){
+  while(running && myId === sessionId){
+    const t0 = Date.now();
+    if(!checking && !paused){
+      const img = grabFrame();
+      if(img){
+        checking = true;
+        const stepAtSend = cur;
+        try{
+          const r = await api('/api/check', {video_id:videoId, step_index:stepAtSend, image_b64:img, flagged: fixing ? fixing.msg : null});
+          $('#lat').textContent = `${r.latency_ms} ms`;
+          if(running && !paused && myId === sessionId && stepAtSend === cur) handleCheck(r);
+        }catch(e){ $('#lat').textContent = 'check failed'; console.warn(e); }
+        checking = false;
+      }
+    }
+    await new Promise(res => setTimeout(res, Math.max(300, (fixing ? FIX_CHECK_MS : CHECK_EVERY_MS) - (Date.now()-t0))));
+  }
+}
+
+// Correction mode: after a mistake is flagged, say it ONCE, then stay quiet while the learner fixes it.
+// Checks continue (more slowly) and the backend is told what was flagged, so "they're fixing it" reads as
+// in_progress, not as a fresh mistake. One gentle reminder after REMIND_AFTER_MS if it's still wrong.
+const FIX_CHECK_MS   = 6000;    // slower checks while the learner is correcting
+const REMIND_AFTER_MS = 30000;  // one reminder if the same problem is still there
+const CLEAR_AFTER_OK = 2;       // non-mistake checks in a row before we say "that looks better"
+let fixing = null;              // {msg, at, reminded, okStreak}
+
+function handleCheck(r){
+  const elapsed = (Date.now() - stepStartedAt)/1000;
+  const msg = noDash(r.message || '');
+
+  if(r.state === 'done' && r.confidence >= CONF && elapsed >= MIN_STEP_SEC){
+    const wasFixing = !!fixing; fixing = null;
+    sessionLog[cur].completed = true;
+    setPill('done', 'Looks right');
+    lastSpoken = '';
+    speak(wasFixing ? 'That fixed it. Nice work.' : (msg || 'Nice, that looks right.'));
+    const next = cur + 1;
+    setTimeout(() => { if(running && !paused && cur === next-1) goToStep(next); }, 1800);
+    return;
+  }
+
+  if(r.state === 'mistake' && r.confidence >= CONF){
+    if(!fixing){                                   // first time: say it once
+      fixing = {msg, at: Date.now(), reminded: false, okStreak: 0};
+      sessionLog[cur].mistakes.push(msg); renderSteps();
+      player.pauseVideo(); waitingForUser = true;
+      lastSpoken = '';
+      speak(`${msg} Take your time, I'll wait.`);
+      setPill('mistake', 'Fix this');
+    }else{                                         // still wrong: stay quiet, keep the note on screen
+      fixing.okStreak = 0;
+      setPill('mistake', 'Fixing');
+      showSay(fixing.msg);
+      if(!fixing.reminded && Date.now() - fixing.at > REMIND_AFTER_MS){
+        fixing.reminded = true; lastSpoken = '';
+        speak(`Still not quite. Tap replay step ${cur+1} to watch that part again.`);
+      }
+    }
+    return;
+  }
+
+  if(fixing){                                      // not a mistake any more (or not visible while hands work)
+    if(r.state === 'not_visible'){ setPill('mistake', 'Fixing'); return; }
+    fixing.okStreak++;
+    setPill('turn', 'Fixing');
+    if(fixing.okStreak >= CLEAR_AFTER_OK){
+      fixing = null; lastSpoken = '';
+      speak('That looks better. Keep going.');
+      setPill('turn', 'Your turn');
+    }
+    return;
+  }
+
+  if(r.state === 'not_visible'){
+    setPill('', 'Show me your work');
+    if(!notVisibleSaid){ notVisibleSaid = true; showSay(msg || 'Point the camera at your work.'); }
+  }else{
+    setPill(waitingForUser ? 'turn' : 'watch', waitingForUser ? 'Your turn' : `Watch step ${cur+1}`);
+    if(r.state === 'in_progress' && msg && waitingForUser) showSay(msg);
+  }
+}
+
+// ------------------------------------------------------------- pause / replay / done
+function setPauseUI(){
+  const b = $('#pauseBtn');
+  const showPlay = running ? paused : !!(player && player.getPlayerState && player.getPlayerState() !== 1 && tutorial);
+  b.innerHTML = ico(showPlay ? 'play' : 'pause', 'solid');
+  b.title = showPlay ? 'Play' : 'Pause';
+  b.setAttribute('aria-label', b.title);
+  b.classList.toggle('on', running && paused);
+}
+function pauseLesson(){
+  if(!running || paused) return;
+  paused = true; pausedAt = Date.now();
+  if(player) player.pauseVideo();
+  try{ speechSynthesis.cancel(); }catch(e){}
+  setPill('paused', 'Paused'); showSay('');
+  setPauseUI();
+}
+function resumeLesson(){
+  if(!running || !paused) return;
+  paused = false;
+  stepStartedAt += Date.now() - pausedAt;          // paused time doesn't count
+  if(!waitingForUser && player) player.playVideo();
+  setPill(waitingForUser ? 'turn' : 'watch', waitingForUser ? 'Your turn' : `Watch step ${cur+1}`);
+  setPauseUI();
+}
+$('#pauseBtn').onclick = () => {
+  if(!running){ if(player){ const st = player.getPlayerState(); st === 1 ? player.pauseVideo() : player.playVideo(); setTimeout(setPauseUI, 300); } return; }
+  paused ? resumeLesson() : pauseLesson();
+};
+$('#replayBtn').onclick = () => {
+  if(!player) return;
+  const s = tutorial.steps[cur];
+  if(paused){ paused = false; stepStartedAt += Date.now() - pausedAt; setPauseUI(); }
+  waitingForUser = false;
+  player.seekTo(s.start_sec, true); player.playVideo();
+  if(running) setPill('watch', `Replaying step ${cur+1}`);
+};
+$('#doneBtn').onclick   = () => { if(!running) return; sessionLog[cur].completed = true; goToStep(cur+1); };
+$('#finishBtn').onclick = () => finish();
+
+// ------------------------------------------------------------- questions
+function addChat(q, a){ $('#chat').insertAdjacentHTML('afterbegin', `<div class="q">You: ${esc(q)}</div><div class="a">${a}</div>`); }
+
+async function askQuestion(q){
+  q = q.trim(); if(!q) return;
+  const words = q.split(/\s+/).length;
+  if(/\b(resume|continue|play)\b/i.test(q) && words <= 4) return resumeLesson();
+  if(/\b(pause|stop|wait|hold on)\b/i.test(q) && words <= 4) return pauseLesson();
+  if(/\b(next|skip)\b/i.test(q) && words <= 4 && running){ sessionLog[cur].completed = true; return goToStep(cur+1); }
+  if(/\b(repeat|again|replay|show me)\b/i.test(q) && words <= 5) return $('#replayBtn').click();
+  if(player) player.pauseVideo();
+  addChat(q, '<span class="spinner"></span>');
+  try{
+    const r = await api('/api/ask', {video_id:videoId, step_index:cur, question:q, image_b64:grabFrame()});
+    $('#chat .a').textContent = noDash(r.answer); lastSpoken=''; speak(r.answer);
+  }catch(e){ $('#chat .a').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+}
+$('#askBtn').onclick = () => { askQuestion($('#askInput').value); $('#askInput').value=''; };
+$('#askInput').addEventListener('keydown', e => { if(e.key==='Enter') $('#askBtn').click(); });
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+$('#micBtn').onclick = () => {
+  if(!SR){ alert('Voice input needs Chrome. You can type your question instead.'); return; }
+  const rec = new SR(); rec.lang = 'en-IN'; rec.interimResults = false;
+  $('#micBtn').classList.add('listening'); try{ speechSynthesis.cancel(); }catch(e){}
+  rec.onresult = e => askQuestion(e.results[0][0].transcript);
+  rec.onend = () => $('#micBtn').classList.remove('listening');
+  rec.start();
+};
+
+// ------------------------------------------------------------- notes and quiz
+$('#notesBtn').onclick = loadNotes;
+async function loadNotes(){
+  if(notes){ renderNotes(); return; }
+  $('#notesBtn').disabled = true;
+  $('#notesBody').innerHTML = '<p class="muted"><span class="spinner"></span>Writing your notes and questions. This takes 30 to 90 seconds.</p>';
+  try{
+    const j = await api('/api/notes', {video_id:videoId});
+    notes = j.notes; renderNotes();
+  }catch(e){ $('#notesBody').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+  finally{ $('#notesBtn').disabled = false; }
+}
+function renderNotes(){
+  const n = notes, d = noDash;
+  const ts = s => `<span class="ts" data-t="${s}">${fmt(s)}</span>`;
+  $('#notesBody').innerHTML = `
+    <p><b>${esc(d(n.title))}</b><br>${esc(d(n.summary))}</p>
+    <h4>Key points</h4><ul>${n.key_points.map(p=>`<li>${esc(d(p))}</li>`).join('')}</ul>
+    <h4>Notes by section</h4>
+    ${n.sections.map(s=>`<div class="sec"><div class="h">${ts(s.start_sec)}${esc(d(s.heading))}</div>
+      <ul>${s.points.map(p=>`<li>${esc(d(p))}</li>`).join('')}</ul></div>`).join('')}
+    ${n.glossary.length ? `<h4>Key terms</h4><ul>${n.glossary.map(g=>`<li><b>${esc(d(g.term))}:</b> ${esc(d(g.meaning))}</li>`).join('')}</ul>` : ''}
+    <h4>Quick quiz</h4>
+    ${n.questions.map((q,i)=>`<details class="qa"><summary>${i+1}. ${esc(d(q.question))}</summary>
+      <div class="ans">${esc(d(q.answer))} ${ts(q.start_sec)}</div></details>`).join('')}`;
+  $('#notesActions').style.display = 'flex';
+  $('#notesBtn').textContent = 'Notes ready';
+  document.querySelectorAll('#notesBody .ts').forEach(el => el.onclick = () => {
+    if(!player) return; if(running) pauseLesson();
+    player.seekTo(+el.dataset.t, true); player.playVideo();
+    document.querySelector('.a-video').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+}
+function notesMarkdown(){
+  const n = notes, d = noDash, url = `https://www.youtube.com/watch?v=${videoId}`;
+  let md = `# ${d(n.title)}\n\nSource video: ${url}\n\n${d(n.summary)}\n\n## Key points\n\n`;
+  md += n.key_points.map(p=>`- ${d(p)}`).join('\n') + '\n\n## Notes by section\n\n';
+  md += n.sections.map(s=>`### ${d(s.heading)} (${fmt(s.start_sec)})\n\n${s.points.map(p=>`- ${d(p)}`).join('\n')}`).join('\n\n') + '\n\n';
+  if(n.glossary.length) md += '## Key terms\n\n' + n.glossary.map(g=>`- **${d(g.term)}:** ${d(g.meaning)}`).join('\n') + '\n\n';
+  md += '## Quick quiz\n\n' + n.questions.map((q,i)=>`**${i+1}. ${d(q.question)}**\n\nAnswer: ${d(q.answer)} (see ${fmt(q.start_sec)})`).join('\n\n') + '\n';
+  return md;
+}
+const slug = () => (notes?.title || 'notes').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50) || 'notes';
+$('#dlMd').onclick = () => {
+  const blob = new Blob([notesMarkdown()], {type:'text/markdown'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${slug()}-notes.md`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+};
+$('#dlPdf').onclick = () => {
+  const n = notes, d = s => esc(noDash(s)), url = `https://www.youtube.com/watch?v=${videoId}`;
+  const w = window.open('', '_blank');
+  if(!w){ alert('Please allow pop-ups to save the PDF.'); return; }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${d(n.title)} notes</title>
+  <style>body{font:14px/1.55 Georgia,serif;max-width:720px;margin:40px auto;padding:0 20px;color:#111}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:17px;margin:26px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+  h3{font-size:15px;margin:16px 0 4px} .src{color:#666;font-size:12px} .q{margin:12px 0 2px;font-weight:bold} .a{margin:0 0 0 16px}
+  .answers{page-break-before:always}</style></head><body>
+  <h1>${d(n.title)}</h1><div class="src">Notes from ${url}, made with <span style="font-weight:600;color:#1d1b18">Fol<b style="color:#d9480f">low</b></span></div>
+  <p>${d(n.summary)}</p>
+  <h2>Key points</h2><ul>${n.key_points.map(p=>`<li>${d(p)}</li>`).join('')}</ul>
+  <h2>Notes by section</h2>${n.sections.map(s=>`<h3>${d(s.heading)} (${fmt(s.start_sec)})</h3><ul>${s.points.map(p=>`<li>${d(p)}</li>`).join('')}</ul>`).join('')}
+  ${n.glossary.length?`<h2>Key terms</h2><ul>${n.glossary.map(g=>`<li><b>${d(g.term)}:</b> ${d(g.meaning)}</li>`).join('')}</ul>`:''}
+  <h2>Quick quiz</h2>${n.questions.map((q,i)=>`<div class="q">${i+1}. ${d(q.question)}</div>`).join('')}
+  <div class="answers"><h2>Answers</h2>${n.questions.map((q,i)=>`<div class="q">${i+1}. ${d(q.question)}</div><p class="a">${d(q.answer)}</p>`).join('')}</div>
+  <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+  w.document.close();
+};
+
+// ------------------------------------------------------------- finish
+async function finish(){
+  if(!tutorial || !running) return;
+  if(stepStartedAt && !paused) sessionLog[cur].seconds += Math.round((Date.now()-stepStartedAt)/1000);
+  running = false; paused = false; stepStartedAt = 0; setPauseUI();
+  if(player) player.pauseVideo();
+  stopCamera();
+  const done = sessionLog.filter(s=>s.completed).length;
+  const mistakes = sessionLog.reduce((a,s)=>a+s.mistakes.length,0);
+  const secs = sessionLog.reduce((a,s)=>a+s.seconds,0);
+  setPill('done','Lesson finished');
+  $('#stats').innerHTML = `<div><b>${done}/${sessionLog.length}</b>steps done</div><div><b>${mistakes}</b>mistakes caught</div><div><b>${fmt(secs)}</b>total time</div>`;
+  $('#reviewText').innerHTML = '<span class="spinner"></span>Writing your review...';
+  $('#reviewCard').style.display = 'block';
+  $('#startBtn').textContent = 'Start again'; $('#startBtn').disabled = false;
+  cur = 0;
+  try{
+    const r = await api('/api/review', {video_id:videoId, log:sessionLog});
+    $('#reviewText').textContent = noDash(r.review); lastSpoken=''; speak(r.review);
+  }catch(e){ $('#reviewText').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+}
+
+// ------------------------------------------------------------- back to home
+function goHome(){
+  running = false; paused = false; sessionId++;
+  try{ speechSynthesis.cancel(); }catch(e){}
+  stopCamera();
+  if(player){ try{ player.destroy(); }catch(e){} player = null; }
+  $('#videoWrap').innerHTML = '<div id="player"></div>';
+  tutorial = null; videoId = null; notes = null; fixing = null; cur = 0; stepStartedAt = 0; waitingForUser = false; lastSpoken = '';
+  $('#chat').innerHTML = ''; showSay(''); setPill('', 'Camera off'); $('#lat').textContent = '';
+  $('#reviewCard').style.display = 'none';
+  $('#notesBody').innerHTML = '<p class="muted">Get study notes and simple questions with answers for this video, ready to download.</p>';
+  $('#notesActions').style.display = 'none'; $('#notesBtn').textContent = 'Make notes'; $('#notesBtn').disabled = false;
+  $('#startBtn').disabled = false; $('#startBtn').textContent = 'Start lesson';
+  setPauseUI();
+  $('#session').style.display = 'none'; $('#landing').style.display = 'block';
+  $('#homeBtn').style.display = 'none'; document.body.classList.remove('in-session');
+  $('#url').value = ''; $('#prepStatus').textContent = '';
+  window.scrollTo(0, 0);
+}
+$('#homeBtn').onclick = () => { if(!running || confirm('Leave this lesson and start a new tutorial?')) goHome(); };
+$('#logo').onclick = () => { if($('#session').style.display === 'block' && (!running || confirm('Leave this lesson and start a new tutorial?'))) goHome(); };
+</script>
+</body>
+</html>
