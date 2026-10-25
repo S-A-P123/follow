@@ -1,0 +1,232 @@
+/* "How it works" on the home page: an animated, abstract picture of a lesson, from pasting a link to being coached.
+   Flat shapes and cut-paper cards with hard shadows. Each tutorial type has its own palette.
+   Layout: the scene is a container; every element is placed in % for each stage (data-stage 1 to 4), and CSS
+   transitions move it between stages. A narrow container (phones) gets a taller scene with its own positions. */
+
+.how{margin:0}
+.how-kinds{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}
+.how-kinds button{background:transparent;color:var(--muted);padding:7px 12px;border-radius:8px;font-size:14px}
+.how-kinds button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.how-kinds button:focus-visible,.how-pause:focus-visible,.how-steps button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.how-pause{width:40px;height:40px;padding:0;border-radius:50%;background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.how-pause .ic{width:16px;height:16px}
+
+.how-steps{list-style:none;margin:0;padding:0}
+.how-steps button{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:30px 1fr;gap:4px 12px;width:100%;
+  padding:12px 14px;border-radius:12px;color:var(--muted)}
+.how-steps button:hover{background:var(--panel)}
+.how-steps .n{grid-row:span 2;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:14px;
+  border:1.5px solid var(--line);color:var(--muted);transition:background .3s,color .3s,border-color .3s}
+.how-steps b{color:var(--ink);font-weight:600;font-size:15px;line-height:1.3}
+.how-steps .d{font-size:13.5px;line-height:1.45}
+.how-steps .p{grid-column:2;height:3px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:6px;opacity:0;transition:opacity .2s}
+.how-steps .p i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0)}
+.how-steps li.on button{background:var(--panel);color:var(--ink);box-shadow:0 1px 0 var(--line)}
+.how-steps li.on .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.how-steps li.on .p{opacity:1}
+.how-steps li.on .p i{animation:howfill var(--dur,3s) linear forwards;animation-delay:var(--delay,0s)}
+.how.paused .how-steps .p i{animation-play-state:paused}
+@keyframes howfill{to{transform:scaleX(1)}}
+
+/* ---------------------------------------------------------------- the scene */
+.scene-wrap{container-type:inline-size;container-name:scene;min-width:0}
+.scene{
+  --ink-s:#1d1b18; --card:#fffaf2; --card-2:#f1ebe0; --ok-s:#2b8a3e; --warn-s:#e03131;
+  --sc-bg:#f8ebbf; --sc-a:#d9480f; --sc-b:#22335c; --sc-c:#7fb3d5;
+  position:relative;width:100%;max-width:100%;aspect-ratio:16/10;border-radius:18px;overflow:hidden;background:var(--sc-bg);
+  transition:background-color .8s ease;font-family:Inter,system-ui,sans-serif;color:var(--ink-s);isolation:isolate}
+.scene[data-kind="coding"]{--sc-bg:#dde6f6;--sc-a:#3b4cca;--sc-b:#f2b134;--sc-c:#e8590c}
+.scene[data-kind="cooking"]{--sc-bg:#fbe0d2;--sc-a:#e8590c;--sc-b:#7a8b3a;--sc-c:#f2b134}
+.scene[data-kind="yoga"]{--sc-bg:#d9ead2;--sc-a:#2f8f83;--sc-b:#b9a6e3;--sc-c:#f2b134}
+.scene[data-kind="origami"]{--sc-bg:#f8ebbf;--sc-a:#d9480f;--sc-b:#22335c;--sc-c:#7fb3d5}
+@media (prefers-color-scheme: dark){
+  .scene[data-kind="coding"]{--sc-bg:#1d2644} .scene[data-kind="cooking"]{--sc-bg:#3a2118}
+  .scene[data-kind="yoga"]{--sc-bg:#1c2f26} .scene[data-kind="origami"]{--sc-bg:#3a3017}
+  .scene{--ink-s:#0d0c0b}
+}
+.scene.instant,.scene.instant *{transition:none !important}
+
+/* big flat shapes behind everything, drifting slowly */
+.scene .sh{position:absolute;z-index:0;transition:background-color .8s ease,left .9s ease,top .9s ease}
+.scene .sh1{width:46%;aspect-ratio:1;border-radius:50%;background:var(--sc-a);right:-12%;top:-26%;animation:howdrift 16s ease-in-out infinite alternate}
+.scene .sh2{width:34%;aspect-ratio:2/1;border-radius:999px 999px 0 0;background:var(--sc-b);left:-6%;bottom:-2%;animation:howdrift 19s ease-in-out infinite alternate-reverse}
+.scene .sh3{width:13%;aspect-ratio:1;background:var(--sc-c);clip-path:polygon(50% 0,100% 100%,0 100%);left:44%;top:68%;animation:howspin 24s linear infinite}
+.scene .sh4{width:7%;aspect-ratio:1;border-radius:50%;border:.7cqw solid var(--ink-s);left:6%;top:9%;opacity:.85;animation:howdrift 13s ease-in-out infinite alternate}
+@keyframes howdrift{to{transform:translate(4%,6%) rotate(8deg)}}
+@keyframes howspin{to{transform:rotate(360deg)}}
+
+/* cut-paper cards */
+.scene .card{position:absolute;z-index:2;background:var(--card);border:max(1.5px,.28cqw) solid var(--ink-s);border-radius:1.6cqw;
+  box-shadow:.7cqw .7cqw 0 var(--ink-s);overflow:hidden;
+  transition:left .75s cubic-bezier(.65,0,.35,1),top .75s cubic-bezier(.65,0,.35,1),width .75s cubic-bezier(.65,0,.35,1),
+    height .75s cubic-bezier(.65,0,.35,1),opacity .45s ease,transform .75s cubic-bezier(.65,0,.35,1)}
+
+/* stage 1: the link */
+.scene .link{left:9%;top:34%;width:82%;height:17%;display:flex;align-items:center;gap:2%;padding:0 1.4% 0 2%;overflow:visible}
+.scene .lk-ic{width:4.6cqw;height:4.6cqw;flex:none;border-radius:50%;background:var(--sc-a);display:grid;place-items:center;transition:background-color .8s}
+.scene .lk-ic svg{width:55%;height:55%;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.scene .lk-tx{flex:1;min-width:0;font-size:2.3cqw;font-weight:500;white-space:nowrap;overflow:hidden;color:var(--ink-s)}
+.scene .lk-tx .ph{color:#9a9184}
+.scene .lk-tx .caret{display:inline-block;width:.25cqw;height:2.6cqw;background:var(--ink-s);vertical-align:-.45cqw;margin-left:.2cqw;animation:howblink 1s steps(1) infinite}
+@keyframes howblink{50%{opacity:0}}
+.scene .lk-go{flex:none;background:#d9480f;color:#fff;font-weight:600;font-size:2cqw;padding:1.2cqw 2.4cqw;border-radius:1.2cqw;transition:transform .15s,box-shadow .15s;box-shadow:.35cqw .35cqw 0 var(--ink-s)}
+.scene .link.press .lk-go{transform:translate(.3cqw,.3cqw);box-shadow:0 0 0 var(--ink-s)}
+.scene .lk-prev{position:absolute;left:0;top:calc(100% + 2.4cqw);display:flex;align-items:center;gap:1.2cqw;font-size:1.7cqw;font-weight:600;
+  background:var(--card);border:max(1.5px,.28cqw) solid var(--ink-s);border-radius:999px;padding:.8cqw 1.8cqw .8cqw .9cqw;box-shadow:.45cqw .45cqw 0 var(--ink-s);
+  opacity:0;transform:translateY(-1.5cqw);transition:opacity .35s,transform .35s}
+.scene .lk-prev .th{width:5.4cqw;aspect-ratio:16/10;border-radius:.6cqw;background:var(--sc-b);position:relative;transition:background-color .8s}
+.scene .lk-prev .th::after{content:"";position:absolute;left:38%;top:28%;width:30%;height:44%;background:#fff;clip-path:polygon(0 0,100% 50%,0 100%)}
+.scene .lk-prev .mn{color:#7d756a;font-weight:500}
+.scene .link.ready .lk-prev{opacity:1;transform:none}
+.scene .cursor{position:absolute;z-index:5;width:3.4cqw;right:24%;top:150%;opacity:0;transition:right .7s cubic-bezier(.65,0,.35,1),top .7s cubic-bezier(.65,0,.35,1),opacity .3s}
+.scene .cursor svg{width:100%;display:block;filter:drop-shadow(.25cqw .25cqw 0 rgba(0,0,0,.25))}
+.scene .link.aim .cursor{right:2.5%;top:52%;opacity:1}
+
+/* the tutorial video card */
+.scene .vid{left:30%;top:52%;width:40%;height:34%;opacity:0;transform:scale(.85);background:#fffaf2}
+.scene .vid .art{position:absolute;inset:6% 8% 18%}
+.scene .vid .scrim{position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(29,27,24,.18))}
+.scene .vid .play{position:absolute;left:50%;top:42%;width:12cqw;max-width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:rgba(29,27,24,.82);display:grid;place-items:center;opacity:0;transition:opacity .3s}
+.scene .vid .play::after{content:"";width:34%;height:38%;background:#fff;margin-left:8%}
+.scene .vid .play.pa::after{margin-left:0;width:30%;background:linear-gradient(90deg,#fff 0 34%,transparent 34% 66%,#fff 66%)}
+.scene .vid .play.pl::after{clip-path:polygon(0 0,100% 50%,0 100%)}
+.scene .vid .track{position:absolute;left:5%;right:5%;bottom:7%;height:1.2cqw;max-height:9px;border-radius:999px;background:rgba(29,27,24,.18);overflow:hidden}
+.scene .vid .track i{display:block;height:100%;width:62%;background:#d9480f;border-radius:inherit;transition:width .5s}
+.scene .vchip{position:absolute;left:4%;top:5%;font-size:1.45cqw;font-weight:600;padding:.4cqw 1.1cqw;border-radius:999px;background:var(--ink-s);color:#fff;white-space:nowrap}
+.scene .vchip.turn{background:#d9480f}
+
+/* Gemini's lens sweeping the video in stage 2 */
+.scene .lens{position:absolute;z-index:4;width:13cqw;aspect-ratio:1;border-radius:50%;left:6%;top:30%;opacity:0;pointer-events:none;
+  border:max(1.5px,.28cqw) solid var(--ink-s);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.75),rgba(255,255,255,.18) 60%);
+  box-shadow:.5cqw .5cqw 0 var(--ink-s);transition:opacity .4s}
+.scene .lens svg{position:absolute;right:-18%;top:-18%;width:46%;fill:var(--sc-c);stroke:var(--ink-s);stroke-width:1.4;transition:fill .8s}
+
+/* the step map */
+.scene .map{left:60%;top:13%;width:34%;height:74%;opacity:0;display:flex;flex-direction:column;justify-content:center;gap:3%;padding:3% 4%;background:var(--card)}
+.scene .tile{display:flex;align-items:center;gap:1.4cqw;padding:1.1cqw 1.2cqw;border-radius:1cqw;opacity:0;transform:translateX(12%);
+  transition:opacity .35s ease,transform .45s cubic-bezier(.3,1.4,.5,1),background-color .3s}
+.scene .tile.on{opacity:1;transform:none}
+.scene .tile .n{flex:none;width:3.4cqw;height:3.4cqw;border-radius:50%;display:grid;place-items:center;font-size:1.6cqw;font-weight:700;
+  border:max(1.5px,.25cqw) solid var(--ink-s);background:var(--card);transition:background-color .3s,color .3s}
+.scene .tile .n svg{width:58%;fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;display:none}
+.scene .tile .t{flex:1;min-width:0;font-size:1.75cqw;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scene .tile .ts{flex:none;font-size:1.45cqw;color:#7d756a;font-variant-numeric:tabular-nums}
+.scene .tile.done .n{background:var(--ok-s);border-color:var(--ok-s);color:#fff}
+.scene .tile.done .n b{display:none} .scene .tile.done .n svg{display:block}
+.scene .tile.cur{background:#ffe8dc} .scene .tile.cur .n{background:#d9480f;border-color:#d9480f;color:#fff}
+
+/* the learner's camera (or screen) */
+.scene .cam{left:52%;top:7%;width:43.5%;height:86%;opacity:0;transform:translateX(10%);background:var(--card)}
+.scene .cam-h{position:absolute;left:4%;top:3.5%;right:4%;display:flex;align-items:center;gap:1cqw;font-size:1.45cqw;font-weight:600;z-index:2}
+.scene .cam-h .rec{width:1.3cqw;height:1.3cqw;border-radius:50%;background:var(--warn-s);animation:howrec 1.4s ease-in-out infinite}
+@keyframes howrec{50%{opacity:.25}}
+.scene .cam .art{position:absolute;left:6%;right:6%;top:11%;height:58%}
+.scene .scan{position:absolute;top:0;bottom:0;width:18%;left:-20%;z-index:1;opacity:0;
+  background:linear-gradient(90deg,transparent,rgba(217,72,15,.22) 50%,transparent);border-right:max(1.5px,.25cqw) solid rgba(217,72,15,.7)}
+.scene[data-check="scan"] .scan{opacity:1;animation:howscan 1.1s cubic-bezier(.5,0,.5,1) infinite}
+@keyframes howscan{from{left:-20%}to{left:102%}}
+.scene .badge{position:absolute;right:4%;top:3%;width:5.2cqw;height:5.2cqw;border-radius:50%;display:grid;place-items:center;z-index:3;
+  border:max(1.5px,.25cqw) solid var(--ink-s);color:#fff;font-weight:800;font-size:2.8cqw;transform:scale(0);transition:transform .35s cubic-bezier(.3,1.6,.5,1),background-color .2s}
+.scene .badge svg{width:56%;fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;display:none}
+.scene[data-check="mistake"] .badge{transform:scale(1);background:var(--warn-s)}
+.scene[data-check="done"] .badge{transform:scale(1);background:var(--ok-s)}
+.scene[data-check="done"] .badge svg{display:block} .scene[data-check="done"] .badge b{display:none}
+
+/* what the coach says (out loud) */
+.scene .bubble{position:absolute;left:4%;right:4%;bottom:4%;z-index:3;display:flex;align-items:center;gap:1.4cqw;padding:1.4cqw 1.6cqw;
+  background:#fff;border:max(1.5px,.25cqw) solid var(--ink-s);border-radius:1.4cqw;box-shadow:.45cqw .45cqw 0 var(--ink-s);
+  font-size:1.75cqw;line-height:1.35;font-weight:500;opacity:0;transform:translateY(16%);transition:opacity .3s,transform .4s cubic-bezier(.3,1.4,.5,1)}
+.scene[data-check="mistake"] .bubble,.scene[data-check="done"] .bubble{opacity:1;transform:none}
+.scene .wave{flex:none;display:flex;align-items:center;gap:.35cqw;height:2.8cqw}
+.scene .wave i{width:.5cqw;border-radius:999px;background:var(--warn-s);height:40%;animation:howwave .9s ease-in-out infinite}
+.scene .wave i:nth-child(2){animation-delay:-.3s} .scene .wave i:nth-child(3){animation-delay:-.6s}
+.scene[data-check="done"] .wave i{background:var(--ok-s)}
+@keyframes howwave{50%{height:100%}}
+
+/* ---------------------------------------------------------------- stages (wide scene) */
+.scene[data-stage="2"] .link,.scene[data-stage="3"] .link,.scene[data-stage="4"] .link{opacity:0;transform:translateY(-40%) scale(.92);pointer-events:none}
+.scene[data-stage="2"] .vid{left:6%;top:15%;width:47%;height:70%;opacity:1;transform:none}
+.scene[data-stage="3"] .vid,.scene[data-stage="4"] .vid{left:4.5%;top:7%;width:37%;height:45%;opacity:1;transform:none}
+.scene[data-stage="2"] .lens{opacity:1;animation:howlens 2.6s ease-in-out infinite alternate}
+@keyframes howlens{0%{left:6%;top:24%}50%{left:20%;top:48%}100%{left:34%;top:18%}}
+.scene[data-stage="2"] .vid .play.pl{opacity:1}
+.scene[data-stage="2"] .vid .track i{animation:howtrack 2.6s linear forwards}
+@keyframes howtrack{from{width:0}to{width:100%}}
+.scene[data-stage="3"] .vid .play.pa,.scene[data-stage="4"] .vid .play.pa{opacity:1;width:6cqw;left:88%;top:18%}
+.scene[data-stage="2"] .map{left:58.5%;top:13%;width:36%;height:74%;opacity:1}
+.scene[data-stage="3"] .map,.scene[data-stage="4"] .map{left:4.5%;top:57%;width:37%;height:36%;opacity:1;gap:1%;padding:1.5% 2.5%}
+.scene[data-stage="3"] .tile,.scene[data-stage="4"] .tile{padding:.55cqw 1cqw}
+.scene[data-stage="3"] .tile .n,.scene[data-stage="4"] .tile .n{width:2.6cqw;height:2.6cqw;font-size:1.3cqw}
+.scene[data-stage="3"] .tile .t,.scene[data-stage="4"] .tile .t{font-size:1.5cqw}
+.scene[data-stage="3"] .tile .ts,.scene[data-stage="4"] .tile .ts{display:none}
+.scene[data-stage="3"] .cam,.scene[data-stage="4"] .cam{left:45.5%;top:7%;width:50%;height:86%;opacity:1;transform:none}
+
+/* ---------------------------------------------------------------- narrow scene (phones): taller, stacked */
+@container scene (max-width: 560px){
+  .scene{aspect-ratio:5/6;border-radius:14px}
+  .scene .card{border-radius:2.6cqw;box-shadow:1.1cqw 1.1cqw 0 var(--ink-s)}
+  .scene .sh1{width:70%;right:-26%;top:-14%} .scene .sh2{width:56%;left:-12%} .scene .sh3{width:20%;left:70%;top:80%}
+  .scene .sh4{width:11%;border-width:1.1cqw}
+  .scene .link{left:6%;top:30%;width:88%;height:13%;gap:2.5%}
+  .scene .lk-ic{width:7.4cqw;height:7.4cqw}
+  .scene .lk-tx{font-size:4cqw} .scene .lk-tx .caret{width:.45cqw;height:4.6cqw;vertical-align:-.8cqw}
+  .scene .lk-go{font-size:3.6cqw;padding:2cqw 3.6cqw;border-radius:2cqw}
+  .scene .lk-prev{font-size:3.3cqw;gap:2cqw;padding:1.4cqw 3cqw 1.4cqw 1.4cqw;top:calc(100% + 5cqw)}
+  .scene .lk-prev .th{width:9cqw}
+  .scene .cursor{width:6cqw}
+  .scene .vchip{font-size:3cqw;padding:.8cqw 2.2cqw}
+  .scene .vid .track{height:1.8cqw}
+  .scene .lens{width:22cqw}
+  .scene .tile{gap:2.4cqw;padding:1.6cqw 2cqw;border-radius:1.8cqw}
+  .scene .tile .n{width:6cqw;height:6cqw;font-size:3cqw}
+  .scene .tile .t{font-size:3.7cqw} .scene .tile .ts{font-size:3cqw}
+  .scene .cam-h{font-size:3cqw;gap:1.8cqw} .scene .cam-h .rec{width:2.2cqw;height:2.2cqw}
+  .scene .badge{width:8.6cqw;height:8.6cqw;font-size:4.6cqw}
+  .scene .bubble{font-size:3.6cqw;gap:2.4cqw;padding:2.4cqw 2.8cqw;border-radius:2.4cqw}
+  .scene .wave{gap:.6cqw;height:5cqw} .scene .wave i{width:.9cqw}
+
+  .scene[data-stage="2"] .vid{left:7%;top:6%;width:86%;height:44%}
+  .scene[data-stage="3"] .vid,.scene[data-stage="4"] .vid{left:5%;top:4%;width:43%;height:27%}
+  .scene[data-stage="3"] .vid .art,.scene[data-stage="4"] .vid .art{inset:16% 8% 16%}
+  .scene[data-stage="2"] .map{left:7%;top:55%;width:86%;height:39%}
+  .scene[data-stage="3"] .map,.scene[data-stage="4"] .map{left:52%;top:4%;width:43%;height:27%;padding:2% 2.5%;gap:0}
+  .scene[data-stage="3"] .tile,.scene[data-stage="4"] .tile{padding:.7cqw 1.2cqw;gap:1.4cqw}
+  .scene[data-stage="3"] .tile .n,.scene[data-stage="4"] .tile .n{width:3.9cqw;height:3.9cqw;font-size:2.1cqw}
+  .scene[data-stage="3"] .tile .t,.scene[data-stage="4"] .tile .t{font-size:2.7cqw}
+  .scene[data-stage="3"] .vchip,.scene[data-stage="4"] .vchip{font-size:2.5cqw;padding:.6cqw 1.6cqw}
+  .scene[data-stage="3"] .cam,.scene[data-stage="4"] .cam{left:5%;top:35%;width:90%;height:60%}
+  .scene .cam .art{top:12%;height:56%}
+  @keyframes howlens{0%{left:8%;top:10%}50%{left:40%;top:26%}100%{left:66%;top:8%}}
+}
+
+/* ---------------------------------------------------------------- the drawings inside the cards */
+.art svg{width:100%;height:100%;display:block;overflow:visible}
+.art .hl{fill:none;stroke:var(--warn-s,#e03131);stroke-width:2.2;stroke-dasharray:5 4;opacity:0;transition:opacity .3s}
+.art[data-art="2"] .hl{opacity:1;animation:howpulse 1s ease-in-out infinite}
+@keyframes howpulse{50%{stroke-width:3.4}}
+/* origami: the paper hat's two bottom flaps fold up */
+.art .o-front,.art .o-back{transform-box:view-box;transform-origin:100px 104px;transition:transform .7s cubic-bezier(.6,0,.3,1.25)}
+.art:is([data-art="1"],[data-art="2"],[data-art="3"]) .o-front{transform:scaleY(-1)}
+.art[data-art="3"] .o-back{transform:scaleY(-1)}
+/* cooking: tomatoes drop into the pan, then steam */
+.art .tom{transform:translateY(-120px);opacity:0;transition:transform .6s cubic-bezier(.3,1.5,.5,1),opacity .2s}
+.art:is([data-art="1"],[data-art="2"],[data-art="3"]) .tom.t1,.art:is([data-art="1"],[data-art="2"],[data-art="3"]) .tom.t2,.art[data-art="3"] .tom.t3{transform:none;opacity:1}
+.art .tom.t2{transition-delay:.18s}
+.art .steam{opacity:0;stroke:#9a9184;stroke-width:3;fill:none;stroke-linecap:round}
+.art[data-art="3"] .steam{animation:howsteam 1.8s ease-in-out infinite}
+.art[data-art="3"] .steam:nth-of-type(2){animation-delay:.6s} .art[data-art="3"] .steam:nth-of-type(3){animation-delay:1.2s}
+@keyframes howsteam{0%{opacity:0;transform:translateY(6px)}40%{opacity:.8}100%{opacity:0;transform:translateY(-14px)}}
+/* coding: a line is typed, a quote is missing, then it runs */
+.art .c-grow{transform-box:fill-box;transform-origin:0 50%;transform:scaleX(0);transition:transform .7s steps(7)}
+.art:is([data-art="1"],[data-art="2"],[data-art="3"]) .c-fn,.art:is([data-art="1"],[data-art="2"],[data-art="3"]) .c-str,.art[data-art="3"] .c-end{transform:none}
+.art .c-str{transition-delay:.45s}
+.art .c-sq,.art .c-err{opacity:0;transition:opacity .25s}
+.art[data-art="2"] .c-sq,.art[data-art="2"] .c-err{opacity:1}
+.art .c-out,.art .c-ok{opacity:0;transition:opacity .3s .5s}
+.art[data-art="3"] .c-out,.art[data-art="3"] .c-ok{opacity:1}
+
+@media (prefers-reduced-motion: reduce){
+  .scene *,.scene{animation:none !important;transition-duration:.01ms !important}
+  .scene[data-check="scan"] .scan{left:40%}
+}
